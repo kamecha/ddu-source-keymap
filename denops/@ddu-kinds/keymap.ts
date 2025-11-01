@@ -40,8 +40,7 @@ export class Kind extends BaseKind<Params> {
       if (action.mode !== "n") {
         return ActionFlags.None;
       }
-      // TODO: For special strings, it may not work correctly, so we want to escape them properly.
-      await fn.feedkeys(args.denops, action.lhs);
+      await args.denops.call("ddu#source#keymap#feedkeys", action.lhs);
       return ActionFlags.None;
     },
   };
