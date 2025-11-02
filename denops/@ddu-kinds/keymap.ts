@@ -3,6 +3,8 @@ import { ActionFlags, Actions } from "jsr:@shougo/ddu-vim@11.1.0/types";
 import { BaseKind } from "jsr:@shougo/ddu-vim@11.1.0/kind";
 import * as fn from "jsr:@denops/std@8.0.0/function";
 import type { Denops } from "jsr:@denops/std@8.0.0";
+import type { RawString } from "jsr:@denops/std@8.0.0/eval";
+import { rawString, useEval } from "jsr:@denops/std@8.0.0/eval";
 
 type Params = Record<never, never>;
 
@@ -40,7 +42,13 @@ export class Kind extends BaseKind<Params> {
       if (action.mode !== "n") {
         return ActionFlags.None;
       }
-      await args.denops.call("ddu#source#keymap#feedkeys", action.lhs);
+      // "<CR>" -> "\<CR>"
+      const escapedLhs = action.lhs.replace(/<([^>]+)>/g, "\\<$1>");
+      // vim 上での "\<CR>" の扱いをするため、 RawString に変換する
+      const lhsKeySequence: RawString = rawString`${escapedLhs}`;
+      await useEval(args.denops, async (denopsHelper) => {
+        await fn.feedkeys(denopsHelper, lhsKeySequence);
+      });
       return ActionFlags.None;
     },
   };
